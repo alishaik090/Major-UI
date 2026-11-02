@@ -1,0 +1,20 @@
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+import morgan from "morgan";
+import { env } from "./config/env.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { requestId } from "./middleware/request-id.js";
+import { healthRouter } from "./routes/health.js";
+import { predictRouter } from "./routes/predict.js";
+
+export const app = express();
+app.disable("x-powered-by");
+app.use(helmet());
+app.use(cors({ origin: env.corsOrigin, methods: ["GET", "POST"] }));
+app.use(morgan(":method :url :status :response-time ms - :req[x-request-id]"));
+app.use(requestId);
+app.use("/api", healthRouter);
+app.use("/api", predictRouter);
+app.use((_req, res) => res.status(404).json({ error: { code: "NOT_FOUND", message: "Route not found." } }));
+app.use(errorHandler);
